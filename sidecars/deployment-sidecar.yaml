@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sidecar-deploy
+  labels:
+    app: sidecar-deploy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sidecar-deploy
+  template:
+    metadata:
+      labels:
+        app: sidecar-deploy
+    spec:
+      containers:
+        - name: sidecar-deploy
+          image: alpine:latest
+          imagePullPolicy: IfNotPresent
+          command: ['sh', '-c', 'while true; do echo "test" >> /tmp/info.log; sleep 1; done']
+          volumeMounts:
+            - name: data
+              mountPath: /tmp
+          resources:
+            limits:
+              memory: "10Mi"
+              cpu: "10m"
+            requests:
+              memory: "10Mi"
+              cpu: "10m"
+      initContainers:
+        - name: sws-init
+          image: joseluisq/static-web-server:latest
+          imagePullPolicy: IfNotPresent
+          restartPolicy: Always
+          ports:
+            - containerPort: 80
+          startupProbe:
+            httpGet:
+              path: /
+              port: 80
+          resources:
+            limits:
+              memory: "10Mi"
+              cpu: "10m"
+            requests:
+              memory: "10Mi"
+              cpu: "10m"
+      volumes:
+        - name: data
+          emptyDir: {}

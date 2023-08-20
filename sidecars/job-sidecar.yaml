@@ -1,0 +1,44 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: sidecar-job
+spec:
+  template:
+    spec:
+      containers:
+        - name: sidecar-job
+          image: alpine:latest
+          command: ['sh', '-c', 'echo "test" > /tmp/info.log']
+          imagePullPolicy: IfNotPresent
+          volumeMounts:
+            - name: data
+              mountPath: /tmp
+          resources:
+            limits:
+              memory: "10Mi"
+              cpu: "10m"
+            requests:
+              memory: "10Mi"
+              cpu: "10m"
+      initContainers:
+        - name: sws-init
+          image: joseluisq/static-web-server:latest
+          imagePullPolicy: IfNotPresent
+          restartPolicy: Always
+          ports:
+            - containerPort: 80
+          startupProbe:
+            httpGet:
+              path: /
+              port: 80
+          resources:
+            limits:
+              memory: "10Mi"
+              cpu: "10m"
+            requests:
+              memory: "10Mi"
+              cpu: "10m"
+      restartPolicy: Never
+      volumes:
+        - name: data
+          emptyDir: {}
